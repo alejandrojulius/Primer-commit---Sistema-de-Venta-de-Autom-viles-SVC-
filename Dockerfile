@@ -1,35 +1,32 @@
-# Dockerfile para Spring Boot con Maven
+# Dockerfile simple y estable para Spring Boot
 FROM eclipse-temurin:21-jdk-alpine AS build
 
 WORKDIR /app
 
-# Copiar archivos de Maven
-COPY .mvn/ .mvn
+# Copiar solo lo necesario para Maven
 COPY mvnw .
 COPY pom.xml .
+COPY .mvn/ .mvn
 
-# Dar permisos al mvnw
+# Dar permisos
 RUN chmod +x ./mvnw
 
-# Descargar dependencias (para cache)
+# Descargar dependencias
 RUN ./mvnw dependency:go-offline -B
 
 # Copiar código fuente
 COPY src ./src
 
-# Construir la aplicación
+# Construir
 RUN ./mvnw clean package -DskipTests
 
-# Imagen final más ligera
+# Imagen final
 FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
-# Copiar el JAR generado
 COPY --from=build /app/target/*.jar app.jar
 
-# Puerto que usa Render
 EXPOSE 8080
 
-# Comando para ejecutar
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
